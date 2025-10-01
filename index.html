@@ -222,14 +222,13 @@
     .disconnected { color: red; }
     
     .output {
-      flex: 1;
       background: var(--output-bg);
       border: 2px inset var(--bg-color);
       margin: 8px;
       padding: 8px;
       overflow-y: auto;
       font-family: monospace;
-      font-size: 13px;
+      font-size: var(--output-font-size, 13px);
       line-height: 1.4;
       white-space: pre-wrap;
       min-height: 200px;
@@ -237,19 +236,65 @@
       -webkit-user-select: text;
       -moz-user-select: text;
       -ms-user-select: text;
-      transition: background-color 0.3s ease, color 0.3s ease;
+      transition: background-color 0.3s ease, color 0.3s ease, font-size 0.2s ease;
+      height: var(--output-height, 60vh);
+      max-height: 80vh;
+    }
+    
+    .resize-handle {
+      height: 4px;
+      background: var(--border-dark);
+      cursor: ns-resize;
+      border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-dark);
+      margin: 0 8px;
+    }
+    
+    .resize-handle:hover {
+      background: var(--user-color);
     }
     
     .input-area {
       background: var(--bg-color);
       padding: 8px;
-      border-top: 2px inset var(--bg-color);
-      flex-shrink: 0;
+      flex: 1;
       min-height: 80px;
     }
     
+    .input-area textarea {
+      width: 100%;
+      height: 100%;
+      padding: 4px;
+      border: 2px inset #c0c0c0;
+      font-family: monospace;
+      font-size: 12px;
+      resize: none;
+      box-sizing: border-box;
+      background: var(--output-bg);
+      color: var(--text-color);
+    }
+    
+    .button-footer {
+      background: var(--bg-color);
+      padding: 8px;
+      border-top: 2px inset var(--bg-color);
+      flex-shrink: 0;
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    
     .text-row {
+      flex: 1;
+      display: flex;
       margin-bottom: 8px;
+    }
+    
+    .text-row textarea {
+      flex: 1;
+      resize: none;
     }
     
     .button-row {
@@ -470,26 +515,27 @@
     <div class="content-area">
       <div id="output" class="output">Q CLI Interface Ready
 </div>
+      <div class="resize-handle" id="resizeHandle"></div>
       
       <div class="input-area">
-        <div class="text-row">
-          <textarea id="input" placeholder="Enter command..." rows="4" spellcheck="false"></textarea>
-        </div>
-        <div class="button-row">
-          <button onclick="sendMessage()" class="send-btn">Send</button>
-          <button onclick="sendYes()" id="yesBtn" class="prompt-btn">Y</button>
-          <button onclick="sendNo()" id="noBtn" class="prompt-btn">N</button>
-          <button onclick="sendTrust()" id="trustBtn" class="prompt-btn">T</button>
-          <button onclick="clearOutput()">Clear</button>
-          <button onclick="newSession()">New</button>
-          <button onclick="saveCurrentChat()">Save Chat</button>
-          <button onclick="exportChat()">Export Chat</button>
-          <button onclick="generateReport()">Generate Report</button>
-          <button onclick="openMcpConfig()">MCP Config</button>
-          <div class="spacer"></div>
-          <button id="themeToggle" onclick="toggleTheme()">🌙</button>
-          <button class="close-btn" onclick="closeApp()">✕</button>
-        </div>
+        <textarea id="input" placeholder="Enter command..." rows="4" spellcheck="false"></textarea>
+      </div>
+      
+      <div class="button-footer">
+        <button onclick="sendMessage()" class="send-btn">Send</button>
+        <button onclick="sendYes()" id="yesBtn" class="prompt-btn">Y</button>
+        <button onclick="sendNo()" id="noBtn" class="prompt-btn">N</button>
+        <button onclick="sendTrust()" id="trustBtn" class="prompt-btn">T</button>
+        <button onclick="clearOutput()">Clear</button>
+        <button onclick="newSession()">New</button>
+        <button onclick="saveCurrentChat()">Save Chat</button>
+        <button onclick="exportChat()">Export Chat</button>
+        <button onclick="generateReport()">Generate Report</button>
+        <button onclick="openMcpConfig()">MCP Config</button>
+        <div class="spacer"></div>
+        <button id="fontSizeBtn" onclick="cycleFontSize()">🔍</button>
+        <button id="themeToggle" onclick="toggleTheme()">🌙</button>
+        <button class="close-btn" onclick="closeApp()">✕</button>
       </div>
     </div>
   </div>
@@ -504,6 +550,67 @@
     let currentLoadedChatId = null; // Track currently loaded chat
     let currentLoadedChatTitle = null; // Track current chat title
     let isDarkMode = false; // Track theme state
+    let currentFontSize = 13; // Default font size
+    let isResizing = false;
+    
+    // Font size control
+    function cycleFontSize() {
+      const sizes = [13, 15, 17, 19];
+      const currentIndex = sizes.indexOf(currentFontSize);
+      currentFontSize = sizes[(currentIndex + 1) % sizes.length];
+      
+      document.documentElement.style.setProperty('--output-font-size', currentFontSize + 'px');
+      localStorage.setItem('fontSize', currentFontSize);
+    }
+    
+    // Load saved font size
+    function loadSavedFontSize() {
+      const savedSize = localStorage.getItem('fontSize');
+      if (savedSize) {
+        currentFontSize = parseInt(savedSize);
+        document.documentElement.style.setProperty('--output-font-size', currentFontSize + 'px');
+      }
+    }
+    
+    // Resize functionality
+    function initResize() {
+      const handle = document.getElementById('resizeHandle');
+      const output = document.getElementById('output');
+      
+      handle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.addEventListener('mousemove', handleResize);
+        document.addEventListener('mouseup', stopResize);
+        e.preventDefault();
+      });
+    }
+    
+    function handleResize(e) {
+      if (!isResizing) return;
+      
+      const container = document.querySelector('.content-area');
+      const rect = container.getBoundingClientRect();
+      const percentage = ((e.clientY - rect.top) / rect.height) * 100;
+      
+      if (percentage > 20 && percentage < 80) {
+        document.documentElement.style.setProperty('--output-height', percentage + 'vh');
+        localStorage.setItem('outputHeight', percentage);
+      }
+    }
+    
+    function stopResize() {
+      isResizing = false;
+      document.removeEventListener('mousemove', handleResize);
+      document.removeEventListener('mouseup', stopResize);
+    }
+    
+    // Load saved output height
+    function loadSavedHeight() {
+      const savedHeight = localStorage.getItem('outputHeight');
+      if (savedHeight) {
+        document.documentElement.style.setProperty('--output-height', savedHeight + 'vh');
+      }
+    }
     
     // Theme toggle function
     function toggleTheme() {
@@ -1812,6 +1919,9 @@ Focus on actionable insights rather than conversation flow. Make it executive-re
         initSession();
         loadChatList(); // Load saved chats
         loadSavedTheme(); // Load saved theme
+        loadSavedFontSize(); // Load saved font size
+        loadSavedHeight(); // Load saved output height
+        initResize(); // Initialize resize functionality
         
         window.electronAPI.onQOutput((event, data) => {
           try {

@@ -9,7 +9,7 @@ A nostalgic 90s-themed desktop application that brings classic computing aesthet
 
 ![Dark Mode Interface](assets/screenshots/dark-mode-interface.png)
 *Dark mode with authentic 90s terminal aesthetics*
-sidebar displaying saved chat history with delete options*
+*sidebar displaying saved chat history with delete options*
 
 ![MCP Configuration Editor](assets/screenshots/mcp-editor.png)
 *Built-in MCP configuration editor with JSON validation and dark mode support*
@@ -184,11 +184,6 @@ npm run build-linux  # Linux AppImage
 5. Push: `git push origin feature-name`
 6. Create a Pull Request
 
-## Automated Releases
-
-GitHub Actions automatically builds installers for all platforms when you:
-- Push a new tag: `git tag v1.0.0 && git push origin v1.0.0`
-- Installers are attached to the GitHub release page
 
 ## Troubleshooting
 
