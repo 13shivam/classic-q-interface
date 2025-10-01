@@ -1,0 +1,219 @@
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  color: #ffffff;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #404040;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 18px;
+  flex: 1;
+}
+
+.header nav {
+  display: flex;
+  gap: 10px;
+  margin-right: 20px;
+}
+
+.header nav button {
+  padding: 8px 16px;
+  background: #404040;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.header nav button.active {
+  background: #007acc;
+}
+
+.status {
+  font-size: 14px;
+}
+
+.connected {
+  color: #4caf50;
+}
+
+.disconnected {
+  color: #f44336;
+}
+
+.chat-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 20px;
+}
+
+.input-section {
+  min-height: 150px;
+}
+
+.input-section textarea {
+  width: 100%;
+  height: 120px;
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  color: white;
+  padding: 12px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 14px;
+  resize: vertical;
+  border-radius: 4px;
+}
+
+.input-section textarea.prompt-mode {
+  border-color: #ffa726;
+  background: #2d2416;
+}
+
+.input-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.input-controls button {
+  padding: 8px 16px;
+  background: #007acc;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.input-controls button:disabled {
+  background: #404040;
+  cursor: not-allowed;
+}
+
+.char-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #888;
+}
+
+.output-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.output-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.output-controls button {
+  padding: 6px 12px;
+  background: #404040;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.output {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid #404040;
+  padding: 15px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  border-radius: 4px;
+}
+
+.file-link {
+  color: #4fc3f7;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.file-link:hover {
+  color: #81d4fa;
+}
+
+.config-view {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.config-header {
+  margin-bottom: 20px;
+}
+
+.config-header h2 {
+  margin: 0 0 10px 0;
+}
+
+.config-header p {
+  margin: 0 0 15px 0;
+  color: #888;
+  font-family: monospace;
+}
+
+.config-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.config-controls button {
+  padding: 8px 16px;
+  background: #007acc;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.config-editor {
+  flex: 1;
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  color: white;
+  padding: 15px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+  resize: none;
+  border-radius: 4px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}

@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Classic Q Interface</title>
+  <style>
+    :root {
+      --bg-color: #c0c0c0;
+      --text-color: #000;
+      --output-bg: white;
+      --border-light: #dfdfdf;
+      --border-dark: #808080;
+      --user-color: #0066cc;
+      --error-color: red;
+      --tool-color: #008000;
+      --system-color: #666;
+      --prompt-color: #ff6600;
+    }
+    
+    [data-theme="dark"] {
+      --bg-color: #2a2a2a;
+      --text-color: #e0e0e0;
+      --output-bg: #1a1a1a;
+      --border-light: #404040;
+      --border-dark: #1a1a1a;
+      --user-color: #66b3ff;
+      --error-color: #ff6666;
+      --tool-color: #00cc00;
+      --system-color: #aaa;
+      --prompt-color: #ffaa44;
+    }
+    
+    body { 
+      margin: 0; 
+      font-family: monospace;
+      background: var(--bg-color);
+      color: var(--text-color);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 250px;
+      background: var(--bg-color);
+      border-right: 2px inset var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.3s ease;
+    }
+    
+    .sidebar.hidden {
+      margin-left: -250px;
+    }
+    
+    .sidebar-header {
+      background: var(--bg-color);
+      border-bottom: 2px inset var(--bg-color);
+      padding: 8px;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    
+    .chat-item {
+      background: #f0f0f0;
+      border: 1px outset #c0c0c0;
+      margin: 2px 0;
+      padding: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .chat-item:hover {
+      background: #e0e0e0;
+    }
+    
+    .chat-item:active {
+      border: 1px inset #c0c0c0;
+    }
+    
+    .chat-item.selected {
+      background: #0066cc;
+      color: white;
+      border: 1px inset #0066cc;
+    }
+    
+    .chat-item.selected:hover {
+      background: #0052a3;
+    }
+    
+    .chat-content {
+      flex: 1;
+      margin-right: 5px;
+    }
+    
+    .delete-btn {
+      background: #ff4444;
+      color: white;
+      border: 1px outset #ff4444;
+      padding: 2px 4px;
+      font-size: 10px;
+      cursor: pointer;
+      min-width: 20px;
+      text-align: center;
+    }
+    
+    .delete-btn:hover {
+      background: #ff6666;
+    }
+    
+    .delete-btn:active {
+      border: 1px inset #ff4444;
+      background: #cc0000;
+    }
+    
+    .chat-title {
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+    
+    .chat-date {
+      color: #666;
+      font-size: 10px;
+    }
+    
+    /* Dark mode chat items */
+    [data-theme="dark"] .chat-item {
+      background: #404040;
+      border: 1px outset #606060;
+      color: var(--text-color);
+    }
+    
+    [data-theme="dark"] .chat-item:hover {
+      background: #505050;
+    }
+    
+    [data-theme="dark"] .chat-item:active {
+      border: 1px inset #606060;
+    }
+    
+    [data-theme="dark"] .chat-item.selected {
+      background: #0052a3;
+      color: white;
+      border: 1px inset #0052a3;
+    }
+    
+    [data-theme="dark"] .chat-item.selected:hover {
+      background: #003d7a;
+    }
+    
+    [data-theme="dark"] .chat-date {
+      color: #aaa;
+    }
+    
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      background: var(--bg-color);
+      border-bottom: 2px inset var(--bg-color);
+      padding: 8px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .close-btn {
+      background: #cc0000;
+      color: white;
+      border: 2px outset #cc0000;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: monospace;
+    }
+    
+    .close-btn:hover {
+      background: #ff0000;
+    }
+    
+    .close-btn:active {
+      border: 2px inset #cc0000;
+      background: #990000;
+    }
+    
+    .status {
+      float: right;
+    }
+    
+    .connected { color: green; }
+    .disconnected { color: red; }
+    
+    .output {
+      flex: 1;
+      background: var(--output-bg);
+      border: 2px inset var(--bg-color);
+      margin: 8px;
+      padding: 8px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      min-height: 200px;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    .input-area {
+      background: var(--bg-color);
+      padding: 8px;
+      border-top: 2px inset var(--bg-color);
+      flex-shrink: 0;
+      min-height: 80px;
+    }
+    
+    .text-row {
+      margin-bottom: 8px;
+    }
+    
+    .button-row {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    
+    .spacer {
+      flex: 1;
+    }
+    
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 4px;
+      border: 2px inset #c0c0c0;
+      font-family: monospace;
+      font-size: 12px;
+      resize: none;
+      box-sizing: border-box;
+    }
+    
+    input[type="text"].prompt-mode, textarea.prompt-mode {
+      background: #ffff99;
+    }
+    
+    button {
+      padding: 6px 10px;
+      border: 2px outset var(--bg-color);
+      background: var(--bg-color);
+      font-family: monospace;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--text-color);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    button:active {
+      border: 2px inset var(--bg-color);
+    }
+    
+    .send-btn {
+      min-width: 50px;
+      font-weight: bold;
+    }
+    
+    .prompt-btn {
+      min-width: 30px;
+      padding: 6px 8px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    #yesBtn {
+      background: #ffff99;
+    }
+    
+    #yesBtn:hover {
+      background: #ffff66;
+    }
+    
+    #yesBtn:active {
+      border: 2px inset #c0c0c0;
+      background: #ffff33;
+    }
+    
+    #noBtn {
+      background: #ff9999;
+    }
+    
+    #noBtn:hover {
+      background: #ff6666;
+    }
+    
+    #noBtn:active {
+      border: 2px inset #c0c0c0;
+      background: #ff3333;
+    }
+    
+    #trustBtn {
+      background: #99ff99;
+    }
+    
+    #trustBtn:hover {
+      background: #66ff66;
+    }
+    
+    #trustBtn:active {
+      border: 2px inset #c0c0c0;
+      background: #33ff33;
+    }
+    
+    .user-input { color: var(--user-color); font-weight: bold; }
+    .user-bubble { 
+      background: #e6f3ff; 
+      color: var(--user-color); 
+      padding: 4px 8px; 
+      border-radius: 12px; 
+      display: inline-block; 
+      margin: 2px 0; 
+      font-weight: bold;
+      user-select: text;
+    }
+    .assistant-italic { font-style: italic; user-select: text; }
+    .system-msg { color: var(--system-color); font-style: italic; user-select: text; }
+    .error { color: var(--error-color); user-select: text; }
+    .tool { color: var(--tool-color); user-select: text; }
+    .prompt { color: var(--prompt-color); font-weight: bold; user-select: text; }
+    .file-link { 
+      color: var(--user-color); 
+      text-decoration: underline; 
+      cursor: pointer; 
+      user-select: text;
+    }
+    
+    /* MCP Modal Styles */
+    .mcp-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .mcp-editor {
+      background: var(--bg-color);
+      border: 2px inset var(--bg-color);
+      width: 80%;
+      height: 80%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      color: var(--text-color);
+    }
+    
+    .mcp-path {
+      background: var(--output-bg);
+      color: var(--text-color);
+      padding: 5px;
+      margin-bottom: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      border: 1px inset var(--bg-color);
+      word-break: break-all;
+    }
+    
+    .editor-container {
+      display: flex;
+      border: 2px inset var(--bg-color);
+      min-height: 400px;
+    }
+    
+    .line-numbers {
+      background: var(--output-bg);
+      color: var(--system-color);
+      padding: 5px 8px;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      text-align: right;
+      user-select: none;
+      border-right: 1px solid var(--border-dark);
+      min-width: 40px;
+      white-space: pre;
+      overflow: hidden;
+    }
+    
+    .mcp-textarea {
+      width: 100%;
+      flex: 1;
+      font-family: monospace;
+      font-size: 12px;
+      border: none;
+      padding: 5px;
+      resize: none;
+      outline: none;
+      line-height: 1.4;
+      background: var(--output-bg);
+      color: var(--text-color);
+    }
+    
+    .mcp-buttons {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <button onclick="toggleSidebar()" style="margin-right: 10px; padding: 2px 6px;">≡</button>
+      <span id="headerTitle">Classic Q Interface</span>
+    </div>
+    <div class="header-right">
+      <span class="status">Status: <span id="status" class="disconnected">●</span></span>
+    </div>
+  </div>
+  
+  <div class="main-container">
+    <div id="sidebar" class="sidebar hidden">
+      <div class="sidebar-header">
+        Saved Chats (<span id="chatCount">0</span>/100)
+      </div>
+      <div id="chatList" class="chat-list">
+        <!-- Chat items will be populated here -->
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <div id="output" class="output">Q CLI Interface Ready
+</div>
+      
+      <div class="input-area">
+        <div class="text-row">
+          <textarea id="input" placeholder="Enter command..." rows="4" spellcheck="false"></textarea>
+        </div>
+        <div class="button-row">
+          <button onclick="sendMessage()" class="send-btn">Send</button>
+          <button onclick="sendYes()" id="yesBtn" class="prompt-btn">Y</button>
+          <button onclick="sendNo()" id="noBtn" class="prompt-btn">N</button>
+          <button onclick="sendTrust()" id="trustBtn" class="prompt-btn">T</button>
+          <button onclick="clearOutput()">Clear</button>
+          <button onclick="newSession()">New</button>
+          <button onclick="saveCurrentChat()">Save Chat</button>
+          <button onclick="exportChat()">Export Chat</button>
+          <button onclick="generateReport()">Generate Report</button>
+          <button onclick="openMcpConfig()">MCP Config</button>
+          <div class="spacer"></div>
+          <button id="themeToggle" onclick="toggleTheme()">🌙</button>
+          <button class="close-btn" onclick="closeApp()">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let sessionId = null;
+    let isWaitingForPrompt = false;
+    let thinkingShown = false;
+    let lastThinkingTime = 0;
+    let dataBuffer = ''; // Buffer for accumulating data chunks
+    let sidebarVisible = false; // Start collapsed
+    let currentLoadedChatId = null; // Track currently loaded chat
+    let currentLoadedChatTitle = null; // Track current chat title
+    let isDarkMode = false; // Track theme state
+    
+    // Theme toggle function
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      const body = document.body;
+      const toggleBtn = document.getElementById('themeToggle');
+      
+      if (isDarkMode) {
+        body.setAttribute('data-theme', 'dark');
+        toggleBtn.textContent = '☀️';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        body.removeAttribute('data-theme');
+        toggleBtn.textContent = '🌙';
+        localStorage.setItem('theme', 'light');
+      }
+    }
+    
+    // Load saved theme on startup
+    function loadSavedTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        isDarkMode = true;
+        document.body.setAttribute('data-theme', 'dark');
+        document.getElementById('themeToggle').textContent = '☀️';
+      }
+    }
+    
+    // Sidebar Functions
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebarVisible = !sidebarVisible;
+      sidebar.classList.toggle('hidden', !sidebarVisible);
+    }
+    
+    // Chat Management Functions
+    let currentChatContent = ''; // Store chat content here
+    
+    async function saveCurrentChat() {
+      try {
+        const outputElement = document.getElementById('output');
+        const chatContent = outputElement ? (outputElement.textContent || outputElement.innerText || '') : '';
+        
+        if (chatContent.length < 200) {
+          alert('⚠️ Chat too short to save. Minimum 200 characters required.');
+          return;
+        }
+        
+        // Store content and show appropriate dialog
+        currentChatContent = chatContent;
+        
+        if (currentLoadedChatId) {
+          // We have a loaded chat - ask if user wants to update or save new
+          showUpdateOrSaveDialog();
+        } else {
+          // No loaded chat - save as new
+          showSaveChatDialog();
+        }
+        
+      } catch (error) {
+        console.error('Error saving chat:', error);
+        alert('❌ Error saving chat: ' + error.message);
+      }
+    }
+    
+    function showUpdateOrSaveDialog() {
+      const modal = document.createElement('div');
+      modal.className = 'mcp-modal';
+      modal.innerHTML = `
+        <div class="mcp-editor" style="width: 450px; height: 220px; padding: 20px;">
+          <h3 style="margin-top: 0;">Save Chat</h3>
+          <div style="margin: 20px 0; flex: 1;">
+            <p>Currently loaded: <strong>"${currentLoadedChatTitle}"</strong></p>
+            <p>What would you like to do?</p>
+          </div>
+          <div class="mcp-buttons" style="margin-top: auto; padding-top: 15px;">
+            <button onclick="updateCurrentChat()">Update Current Chat</button>
+            <button onclick="saveAsNewChat()">Save as New Chat</button>
+            <button onclick="closeSaveChatDialog()">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    async function updateCurrentChat() {
+      try {
+        const result = await window.electronAPI.updateChat({
+          id: currentLoadedChatId,
+          content: currentChatContent
+        });
+        
+        if (result.success) {
+          alert('✅ Chat updated successfully!');
+          closeSaveChatDialog();
+        } else {
+          alert('❌ Failed to update chat: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Error updating chat:', error);
+        alert('❌ Error updating chat: ' + error.message);
+      }
+    }
+    
+    function saveAsNewChat() {
+      closeSaveChatDialog();
+      showSaveChatDialog();
+    }
+    
+    function showSaveChatDialog() {
+      const modal = document.createElement('div');
+      modal.className = 'mcp-modal';
+      modal.innerHTML = `
+        <div class="mcp-editor" style="width: 400px; height: 200px; padding: 20px;">
+          <h3 style="margin-top: 0;">Save New Chat</h3>
+          <div style="margin: 20px 0; flex: 1;">
+            <label>Chat Title:</label><br>
+            <input type="text" id="chatTitle" style="width: calc(100% - 10px); margin-top: 8px; padding: 8px; box-sizing: border-box;" placeholder="Enter chat title...">
+          </div>
+          <div class="mcp-buttons" style="margin-top: auto; padding-top: 15px;">
+            <button onclick="confirmSaveChat()">Save</button>
+            <button onclick="closeSaveChatDialog()">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Focus on input
+      setTimeout(() => {
+        document.getElementById('chatTitle').focus();
+      }, 100);
+    }
+    
+    async function confirmSaveChat() {
+      const title = document.getElementById('chatTitle').value.trim();
+      
+      if (!title) {
+        alert('Please enter a title for the chat.');
+        return;
+      }
+      
+      try {
+        const result = await window.electronAPI.saveChat({
+          title: title,
+          content: currentChatContent
+        });
+        
+        if (result.success) {
+          alert('✅ Chat saved successfully!');
+          loadChatList(); // Refresh the sidebar
+          closeSaveChatDialog();
+        } else {
+          alert('❌ Failed to save chat: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Error saving chat:', error);
+        alert('❌ Error saving chat: ' + error.message);
+      }
+    }
+    
+    function closeSaveChatDialog() {
+      const modal = document.querySelector('.mcp-modal');
+      if (modal) {
+        modal.remove();
+      }
+      currentChatContent = ''; // Clear stored content
+    }
+    
+    async function deleteChat(chatId, chatTitle) {
+      try {
+        // Confirmation dialog
+        if (!confirm(`Delete "${chatTitle}"?\n\nThis cannot be undone.`)) {
+          return;
+        }
+        
+        const result = await window.electronAPI.deleteChat(chatId);
+        
+        if (result.success) {
+          // If deleting currently loaded chat, clear the state
+          if (currentLoadedChatId === chatId) {
+            currentLoadedChatId = null;
+            currentLoadedChatTitle = null;
+            document.getElementById('headerTitle').textContent = 'Classic Q Interface';
+          }
+          
+          // Refresh the chat list
+          loadChatList();
+          
+          alert('✅ Chat deleted successfully!');
+        } else {
+          alert('❌ Failed to delete chat: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Error deleting chat:', error);
+        alert('❌ Error deleting chat: ' + error.message);
+      }
+    }
+    
+    async function loadChatList() {
+      try {
+        const result = await window.electronAPI.getChatList();
+        
+        if (result.success) {
+          const chatList = document.getElementById('chatList');
+          const chatCount = document.getElementById('chatCount');
+          
+          chatCount.textContent = result.chats.length;
+          chatList.innerHTML = '';
+          
+          result.chats.forEach(chat => {
+            const chatItem = document.createElement('div');
+            chatItem.className = 'chat-item';
+            
+            // Highlight if this is the currently loaded chat
+            if (currentLoadedChatId === chat.id) {
+              chatItem.classList.add('selected');
+            }
+            
+            chatItem.innerHTML = `
+              <div class="chat-content" onclick="loadSavedChat(${chat.id}, '${chat.title.replace(/'/g, "\\'")}')">
+                <div class="chat-title">${chat.title}</div>
+                <div class="chat-date">${new Date(chat.created_at).toLocaleDateString()}</div>
+              </div>
+              <button class="delete-btn" onclick="deleteChat(${chat.id}, '${chat.title.replace(/'/g, "\\'")}'); event.stopPropagation();">🗑️</button>
+            `;
+            
+            chatList.appendChild(chatItem);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading chat list:', error);
+      }
+    }
+    
+    async function loadSavedChat(chatId, chatTitle) {
+      try {
+        const result = await window.electronAPI.loadChat(chatId);
+        
+        if (result.success) {
+          // Update current chat tracking
+          currentLoadedChatId = chatId;
+          currentLoadedChatTitle = chatTitle;
+          
+          // Update header to show loaded chat
+          document.getElementById('headerTitle').textContent = `Classic Q Interface - Loaded: ${chatTitle}`;
+          
+          // Kill current session
+          if (sessionId) {
+            await window.electronAPI.killSession(sessionId);
+            sessionId = null;
+          }
+          
+          // Clear output and display saved content
+          const outputElement = document.getElementById('output');
+          outputElement.innerHTML = '';
+          
+          // Add helpful header message
+          addOutput(`📂 Loaded saved chat: "${chatTitle}"\n`);
+          addOutput('💡 Chat history displayed below. Copy relevant context if needed for new conversation.\n\n');
+          addOutput('--- Saved Chat History ---\n\n');
+          
+          // Display saved chat content
+          const span = document.createElement('span');
+          span.textContent = result.content;
+          outputElement.appendChild(span);
+          
+          // Add separator and start fresh session
+          addOutput('\n\n--- End of Saved History ---\n');
+          addOutput('🆕 Starting fresh Q CLI session...\n\n');
+          
+          // Start new session
+          await initSession();
+          
+          // Refresh sidebar to show selection
+          loadChatList();
+          
+        } else {
+          alert('❌ Failed to load chat: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Error loading saved chat:', error);
+        alert('❌ Error loading chat: ' + error.message);
+      }
+    }
+    
+    function processBuffer() {
+      try {
+        // Split buffer into lines
+        const lines = dataBuffer.split('\n');
+        
+        // Keep the last incomplete line in buffer
+        dataBuffer = lines.pop() || '';
+        
+        // Process complete lines
+        lines.forEach(line => {
+          processCompleteLine(line);
+        });
+      } catch (error) {
+        console.error('Error processing buffer:', error);
+        // Fallback: just display raw text
+        const output = document.getElementById('output');
+        output.appendChild(document.createTextNode(dataBuffer));
+        dataBuffer = '';
+      }
+    }
+    
+    function processCompleteLine(lineContent) {
+      try {
+        const output = document.getElementById('output');
+        
+        // Clean ANSI codes but preserve text structure
+        let cleanText = lineContent
+          .replace(/\x1b\[[0-9;]*[mGKH]/g, '')
+          .replace(/\x1b\[[0-9]*[ABCD]/g, '')
+          .replace(/\x1b\[2K/g, '')
+          .replace(/\x1b\[1G/g, '')
+          .replace(/\x1b\[1A/g, '')
+          .replace(/\x1b\[\?25[hl]/g, '')
+          .replace(/\x1b\[\?2004[hl]/g, '') // Remove bracketed paste mode
+          .replace(/\x1b\[38;5;\d+m/g, '') // Remove 256-color foreground
+          .replace(/\x1b\[48;5;\d+m/g, '') // Remove 256-color background
+          .replace(/\x1b\[38;2;\d+;\d+;\d+m/g, '') // Remove RGB foreground
+          .replace(/\x1b\[48;2;\d+;\d+;\d+m/g, '') // Remove RGB background
+          .replace(/\x1b\[[0-9]+;[0-9]+[Hf]/g, '') // Remove cursor positioning
+          .replace(/\x1b\[[0-9]*[JK]/g, '') // Remove clear sequences
+          .replace(/⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏/g, '') // Remove spinner chars
+          .replace(/78+/g, '') // Remove repeated 78 artifacts
+          .replace(/[0-9]{8,}/g, '') // Remove long number sequences
+          .replace(/\r/g, '');
+        
+
+        
+        // Only show messages that contain "servers initialized"
+        if (cleanText.includes('ctrl-c to start chatting') ||
+            /✓ \w+ loaded in/.test(cleanText)) {
+          console.log('Skipping MCP loading message:', cleanText.substring(0, 50));
+          return; // Don't display these messages
+        }
+        
+        // Handle "Thinking..." - show only once per thinking session
+        if (cleanText.includes('Thinking...')) {
+          const now = Date.now();
+          if (!thinkingShown || (now - lastThinkingTime > 5000)) {
+            thinkingShown = true;
+            lastThinkingTime = now;
+            let span = document.createElement('span');
+            span.className = 'system-msg';
+            span.textContent = 'Thinking...\n';
+            output.appendChild(span);
+            output.scrollTop = output.scrollHeight;
+          }
+          return;
+        }
+        
+        // Reset thinking flag when we get actual content
+        if (thinkingShown && cleanText.trim() && !cleanText.includes('Thinking...')) {
+          thinkingShown = false;
+        }
+        
+        // Always display content, even if empty (for spacing)
+        let span = document.createElement('span');
+        
+        if (cleanText.startsWith('> ')) {
+          span.className = 'user-bubble';
+        } else if (cleanText.includes('Error') || cleanText.includes('error')) {
+          span.className = 'error';
+        } else if (cleanText.includes('🛠️') || cleanText.includes('Using tool')) {
+          span.className = 'tool';
+        } else if (/\(y\/n\)|Can I|Should I|Allow|Trust|Proceed/i.test(cleanText)) {
+          span.className = 'prompt';
+        } else if (cleanText.includes('Docker Status:') || cleanText.includes('Getting Ready') || cleanText.includes('Session started')) {
+          span.className = 'system-msg';
+        }
+        
+        // Simple file path detection
+        cleanText = cleanText.replace(
+          /(\/[\w\-\.\/~]+)/g,
+          '<span class="file-link" onclick="openFile(\'$1\')">$1</span>'
+        );
+        
+        // Add newline if not present
+        if (!cleanText.endsWith('\n')) {
+          cleanText += '\n';
+        }
+        
+        span.innerHTML = cleanText;
+        output.appendChild(span);
+        output.scrollTop = output.scrollHeight;
+        
+      } catch (error) {
+        console.error('Error processing line:', error, 'Line content:', lineContent);
+        // Fallback: display raw line
+        const output = document.getElementById('output');
+        output.appendChild(document.createTextNode(lineContent + '\n'));
+      }
+    }
+    
+    function addOutput(text, className = '') {
+      try {
+        console.log('Adding output:', text.substring(0, 100) + (text.length > 100 ? '...' : ''));
+        
+        // Add to buffer instead of processing immediately
+        dataBuffer += text;
+        
+        // Process complete lines
+        processBuffer();
+        
+      } catch (error) {
+        console.error('Error in addOutput:', error);
+        // Emergency fallback: just append raw text
+        const output = document.getElementById('output');
+        const span = document.createElement('span');
+        span.textContent = text;
+        output.appendChild(span);
+      }
+    }
+    
+    async function initSession() {
+      try {
+        console.log('Checking Docker status...');
+        const dockerStatus = await window.electronAPI.checkDocker();
+        console.log('Docker status result:', dockerStatus);
+        console.log('Docker running?', dockerStatus.running);
+        console.log('Docker error?', dockerStatus.error);
+        
+        console.log('Attempting to create session...');
+        sessionId = await window.electronAPI.createSession();
+        console.log('Session created successfully:', sessionId);
+        document.getElementById('status').className = 'connected';
+        
+        let startMessage = 'Session started\n';
+        if (!dockerStatus.running) {
+          console.log('Adding Docker warning because dockerStatus.running is:', dockerStatus.running);
+          startMessage += '⚠️  Docker is not running. Some MCP servers in Amazon Q tools might fail to load.\n\n';
+        } else {
+          startMessage += 'Docker Status: Running\n\n';
+          startMessage += 'Getting Ready in few seconds...\n\n';
+        }
+        
+        addOutput(startMessage);
+      } catch (error) {
+        console.error('Session creation failed:', error);
+        document.getElementById('status').className = 'disconnected';
+        addOutput('Error creating session: ' + error.message + '\n');
+      }
+    }
+    
+    async function sendYes() {
+      try {
+        console.log('Sending Yes response');
+        if (!sessionId) {
+          addOutput('❌ No active session\n');
+          return;
+        }
+        
+        const result = await window.electronAPI.sendToQ(sessionId, 'y');
+        if (!result) {
+          addOutput('Error: Failed to send response\n');
+        }
+      } catch (error) {
+        console.error('Error sending Yes:', error);
+        addOutput('Error: ' + error.message + '\n');
+      }
+    }
+    
+    async function sendNo() {
+      try {
+        console.log('Sending No response');
+        if (!sessionId) {
+          addOutput('❌ No active session\n');
+          return;
+        }
+        
+        const result = await window.electronAPI.sendToQ(sessionId, 'n');
+        if (!result) {
+          addOutput('Error: Failed to send response\n');
+        }
+      } catch (error) {
+        console.error('Error sending No:', error);
+        addOutput('Error: ' + error.message + '\n');
+      }
+    }
+    
+    async function sendTrust() {
+      try {
+        console.log('Sending Trust response');
+        if (!sessionId) {
+          addOutput('❌ No active session\n');
+          return;
+        }
+        
+        const result = await window.electronAPI.sendToQ(sessionId, 'trust');
+        if (!result) {
+          addOutput('Error: Failed to send response\n');
+        }
+      } catch (error) {
+        console.error('Error sending Trust:', error);
+        addOutput('Error: ' + error.message + '\n');
+      }
+    }
+    
+    async function sendMessage() {
+      try {
+        const input = document.getElementById('input');
+        const message = input.value.trim();
+        
+        console.log('Sending message:', message);
+        
+        if (!message) {
+          console.log('Empty message, not sending');
+          return;
+        }
+        
+        if (!sessionId) {
+          console.error('No session ID available');
+          addOutput('Error: No active session\n');
+          return;
+        }
+        
+        input.value = '';
+        
+        const result = await window.electronAPI.sendToQ(sessionId, message);
+        console.log('Send result:', result);
+        
+        if (!result) {
+          addOutput('Error: Failed to send message\n');
+        }
+        
+      } catch (error) {
+        console.error('Error sending message:', error);
+        addOutput('Error sending message: ' + error.message + '\n');
+      }
+    }
+    
+    function clearOutput() {
+      document.getElementById('output').innerHTML = 'Output cleared\n';
+      thinkingShown = false;
+      lastThinkingTime = 0;
+      dataBuffer = ''; // Clear the buffer
+    }
+    
+    async function newSession() {
+      try {
+        if (sessionId) {
+          await window.electronAPI.killSession(sessionId);
+        }
+        
+        // Clear loaded chat state
+        currentLoadedChatId = null;
+        currentLoadedChatTitle = null;
+        document.getElementById('headerTitle').textContent = 'Classic Q Interface';
+        
+        clearOutput();
+        await initSession();
+        
+        // Refresh sidebar to remove selection
+        loadChatList();
+      } catch (error) {
+        console.error('Error creating new session:', error);
+        addOutput('Error creating new session: ' + error.message + '\n');
+      }
+    }
+    
+    function detectContentType(chatContent) {
+      try {
+        console.log('Analyzing content type, length:', chatContent.length);
+        
+        const reportKeywords = /analysis|summary|findings|results|issue|bug|code|documentation|jira|confluence|error|defect|investigation|review|api|tool|using|completed/i;
+        const hasStructuredData = chatContent.includes('•') || chatContent.includes('|') || chatContent.includes('```') || chatContent.includes('🛠️');
+        const substantialContent = chatContent.length > 500;
+        const multipleExchanges = (chatContent.match(/>/g) || []).length > 2;
+        
+        const isReport = reportKeywords.test(chatContent) || hasStructuredData || (substantialContent && multipleExchanges);
+        
+        console.log('Content analysis:', {
+          hasKeywords: reportKeywords.test(chatContent),
+          hasStructuredData,
+          substantialContent,
+          multipleExchanges,
+          isReport
+        });
+        
+        return isReport ? 'report' : 'chat';
+      } catch (error) {
+        console.error('Error detecting content type:', error);
+        return 'chat'; // Safe fallback
+      }
+    }
+    
+    function generateReportHTML(chatContent, contentType, timestamp) {
+      try {
+        console.log('Generating HTML report, type:', contentType);
+        
+        const title = contentType === 'report' ? 'Q CLI Analysis Report' : 'Q CLI Chat History';
+        const subtitle = contentType === 'report' ? 'Generated Analysis Report' : 'Chat Session Export';
+        
+        // Clean and format content
+        const cleanContent = chatContent
+          .replace(/Session started\n/g, '')
+          .replace(/Session ended.*\n/g, '')
+          .replace(/Output cleared\n/g, '')
+          .replace(/Error creating session.*\n/g, '')
+          .trim();
+        
+        // Convert to HTML with proper formatting
+        const htmlContent = cleanContent
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\n/g, '<br>')
+          .replace(/&gt; ([^<]+)<br>/g, '<div class="user-input">▶ $1</div>')
+          .replace(/🛠️([^<]+)<br>/g, '<div class="tool-usage">🛠️ $1</div>')
+          .replace(/Error:([^<]+)<br>/g, '<div class="error-msg">❌ Error: $1</div>');
+        
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - ${timestamp}</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            max-width: 800px; 
+            margin: 40px auto; 
+            padding: 20px; 
+            line-height: 1.6; 
+            color: #333;
+            background: #f9f9f9;
+        }
+        .header { 
+            border-bottom: 2px solid #ddd; 
+            padding-bottom: 20px; 
+            margin-bottom: 30px; 
+        }
+        .header h1 { 
+            color: #2c3e50; 
+            margin: 0; 
+            font-size: 28px; 
+        }
+        .header .subtitle { 
+            color: #7f8c8d; 
+            font-size: 16px; 
+            margin-top: 5px; 
+        }
+        .header .timestamp { 
+            color: #95a5a6; 
+            font-size: 14px; 
+            margin-top: 10px; 
+        }
+        .content { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        .user-input { 
+            background: #e3f2fd; 
+            color: #1976d2; 
+            padding: 10px 15px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            border-left: 4px solid #2196f3; 
+            font-weight: 600; 
+        }
+        .tool-usage { 
+            background: #f1f8e9; 
+            color: #558b2f; 
+            padding: 10px 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border-left: 4px solid #8bc34a; 
+            font-family: monospace; 
+            font-size: 14px; 
+        }
+        .error-msg { 
+            background: #ffebee; 
+            color: #c62828; 
+            padding: 10px 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border-left: 4px solid #f44336; 
+        }
+        .assistant-response { 
+            margin: 15px 0; 
+            padding: 15px; 
+            background: #fafafa; 
+            border-radius: 8px; 
+            font-style: italic; 
+        }
+        .footer { 
+            margin-top: 40px; 
+            padding-top: 20px; 
+            border-top: 1px solid #eee; 
+            text-align: center; 
+            color: #999; 
+            font-size: 12px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>${title}</h1>
+        <div class="subtitle">${subtitle}</div>
+        <div class="timestamp">Generated on ${timestamp}</div>
+    </div>
+    <div class="content">
+        ${htmlContent || '<p><em>No content to display</em></p>'}
+    </div>
+    <div class="footer">
+        Generated by Q CLI Web Interface
+    </div>
+</body>
+</html>`;
+        
+        console.log('HTML report generated successfully, length:', html.length);
+        return html;
+        
+      } catch (error) {
+        console.error('Error generating HTML report:', error);
+        throw new Error('Failed to generate HTML content: ' + error.message);
+      }
+    }
+    
+    async function exportChat(retryCount = 0) {
+      const maxRetries = 3;
+      
+      try {
+        console.log(`Starting export chat (attempt ${retryCount + 1}/${maxRetries + 1})`);
+        
+        // Get chat content
+        const outputElement = document.getElementById('output');
+        if (!outputElement) {
+          throw new Error('Output element not found');
+        }
+        
+        const chatContent = outputElement.textContent || outputElement.innerText || '';
+        console.log('Extracted chat content, length:', chatContent.length);
+        
+        if (!chatContent.trim()) {
+          addOutput('⚠️ No content to export. Start a conversation first.\n');
+          return;
+        }
+        
+        // Show processing message
+        addOutput('📄 Exporting chat history...\n');
+        
+        const timestamp = new Date().toLocaleString();
+        const filename = `q-cli-chat-${Date.now()}.html`;
+        
+        console.log('Chat export details:', { filename, timestamp });
+        
+        // Generate HTML for chat export
+        const htmlContent = generateChatHTML(chatContent, timestamp);
+        
+        // Save file via Electron
+        if (!window.electronAPI || !window.electronAPI.saveReport) {
+          throw new Error('Export functionality not available');
+        }
+        
+        console.log('Saving chat export via Electron API...');
+        const result = await window.electronAPI.saveReport(filename, htmlContent);
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to save chat export');
+        }
+        
+        console.log('Chat exported successfully:', result.filePath);
+        
+        // Show success message with clickable link
+        addOutput(`✅ Chat history exported successfully!\n`);
+        addOutput(`📁 Saved to: ${result.filePath}\n`);
+        
+        // Add clickable link
+        const linkSpan = document.createElement('span');
+        linkSpan.innerHTML = `<span class="file-link" onclick="openFile('${result.filePath}')">🔗 Click to open chat export</span>\n`;
+        document.getElementById('output').appendChild(linkSpan);
+        document.getElementById('output').scrollTop = document.getElementById('output').scrollHeight;
+        
+      } catch (error) {
+        console.error(`Export chat attempt ${retryCount + 1} failed:`, error);
+        
+        if (retryCount < maxRetries) {
+          console.log(`Retrying chat export (${retryCount + 1}/${maxRetries})...`);
+          addOutput(`⚠️ Export failed, retrying... (${retryCount + 1}/${maxRetries})\n`);
+          
+          setTimeout(() => {
+            exportChat(retryCount + 1);
+          }, Math.pow(2, retryCount) * 1000);
+          
+        } else {
+          console.error('All chat export attempts failed:', error);
+          addOutput(`❌ Chat export failed after ${maxRetries + 1} attempts: ${error.message}\n`);
+        }
+      }
+    }
+    
+    let isGeneratingReport = false; // Prevent multiple report generations
+    let waitingForReportResponse = false; // Track if we're waiting for Q's report response
+    
+    async function generateReport() {
+      try {
+        console.log('Starting generate report process');
+        
+        // Prevent multiple simultaneous report generations
+        if (isGeneratingReport) {
+          console.log('Report generation already in progress, ignoring click');
+          return;
+        }
+        
+        if (!sessionId) {
+          addOutput('❌ No active session. Please start a conversation first.\n');
+          return;
+        }
+        
+        // Get current chat content to check if there's enough for a report
+        const outputElement = document.getElementById('output');
+        const chatContent = outputElement ? (outputElement.textContent || outputElement.innerText || '') : '';
+        
+        if (!chatContent.trim() || chatContent.length < 100) {
+          addOutput('⚠️ Not enough conversation content for a meaningful report. Have a longer conversation first.\n');
+          return;
+        }
+        
+        // Set flags to prevent duplicates
+        isGeneratingReport = true;
+        waitingForReportResponse = true;
+        
+        // Show processing message
+        addOutput('🤖 Generating comprehensive report...\n');
+        
+        // Expert-crafted prompt for Q CLI (hidden from UI, only in logs)
+        const reportPrompt = `Please analyze our entire conversation and create a comprehensive HTML report with the following structure, at the end of generated report and user permission once done, display complete absolute path of the file html path so that user can click to download or view locally:
+
+# Summary
+- Key findings and conclusions
+- Main issues identified and resolved
+- Recommendations or next steps
+
+# Technical Details
+- Tools and systems involved
+- Specific data points or metrics discovered
+- Code snippets, configurations, or technical artifacts
+
+# Action Items
+- Immediate tasks requiring attention
+- Long-term recommendations
+- Follow-up items
+
+Format the response as a complete, standalone HTML document with:
+- Professional styling and layout
+- Proper headings and sections
+- Highlighted key information
+- Tables or lists where appropriate
+- Ready for sharing with stakeholders
+
+Focus on actionable insights rather than conversation flow. Make it executive-ready.`;
+        
+        console.log('Sending report generation prompt to Q CLI (hidden from UI):', reportPrompt.substring(0, 100) + '...');
+        
+        // Send the prompt to Q CLI (this won't show in UI due to our filtering)
+        const result = await window.electronAPI.sendToQ(sessionId, reportPrompt);
+        
+        if (!result) {
+          throw new Error('Failed to send report generation request to Q CLI');
+        }
+        
+        console.log('Report generation request sent successfully');
+        addOutput('📝 Q CLI is analyzing the conversation...\n');
+        
+        // Set up auto-save detection for when Q responds with HTML
+        setTimeout(() => {
+          if (waitingForReportResponse) {
+            addOutput('💡 The generated report will be automatically saved when Q CLI completes the analysis.\n');
+          }
+        }, 3000);
+        
+      } catch (error) {
+        console.error('Error generating report:', error);
+        addOutput(`❌ Failed to generate report: ${error.message}\n`);
+        addOutput('💡 Try using "Export Chat" instead for a simple chat history export.\n');
+        
+        // Reset flags on error
+        isGeneratingReport = false;
+        waitingForReportResponse = false;
+      }
+    }
+    
+    function generateChatHTML(chatContent, timestamp) {
+      try {
+        console.log('Generating chat HTML, timestamp:', timestamp);
+        
+        // Clean and format content for chat export
+        const cleanContent = chatContent
+          .replace(/Session started\n/g, '')
+          .replace(/Session ended.*\n/g, '')
+          .replace(/Output cleared\n/g, '')
+          .replace(/Error creating session.*\n/g, '')
+          .trim();
+        
+        // Convert to HTML with proper formatting
+        const htmlContent = cleanContent
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\n/g, '<br>')
+          .replace(/&gt; ([^<]+)<br>/g, '<div class="user-input">▶ $1</div>')
+          .replace(/🛠️([^<]+)<br>/g, '<div class="tool-usage">🛠️ $1</div>')
+          .replace(/Error:([^<]+)<br>/g, '<div class="error-msg">❌ Error: $1</div>');
+        
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q CLI Chat History - ${timestamp}</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            max-width: 800px; 
+            margin: 40px auto; 
+            padding: 20px; 
+            line-height: 1.6; 
+            color: #333;
+            background: #f9f9f9;
+        }
+        .header { 
+            border-bottom: 2px solid #ddd; 
+            padding-bottom: 20px; 
+            margin-bottom: 30px; 
+        }
+        .header h1 { 
+            color: #2c3e50; 
+            margin: 0; 
+            font-size: 28px; 
+        }
+        .header .subtitle { 
+            color: #7f8c8d; 
+            font-size: 16px; 
+            margin-top: 5px; 
+        }
+        .header .timestamp { 
+            color: #95a5a6; 
+            font-size: 14px; 
+            margin-top: 10px; 
+        }
+        .content { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        .user-input { 
+            background: #e3f2fd; 
+            color: #1976d2; 
+            padding: 10px 15px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            border-left: 4px solid #2196f3; 
+            font-weight: 600; 
+        }
+        .tool-usage { 
+            background: #f1f8e9; 
+            color: #558b2f; 
+            padding: 10px 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border-left: 4px solid #8bc34a; 
+            font-family: monospace; 
+            font-size: 14px; 
+        }
+        .error-msg { 
+            background: #ffebee; 
+            color: #c62828; 
+            padding: 10px 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border-left: 4px solid #f44336; 
+        }
+        .footer { 
+            margin-top: 40px; 
+            padding-top: 20px; 
+            border-top: 1px solid #eee; 
+            text-align: center; 
+            color: #999; 
+            font-size: 12px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Q CLI Chat History</h1>
+        <div class="subtitle">Complete Conversation Export</div>
+        <div class="timestamp">Generated on ${timestamp}</div>
+    </div>
+    <div class="content">
+        ${htmlContent || '<p><em>No content to display</em></p>'}
+    </div>
+    <div class="footer">
+        Generated by Q CLI Web Interface
+    </div>
+</body>
+</html>`;
+        
+        console.log('Chat HTML generated successfully, length:', html.length);
+        return html;
+        
+      } catch (error) {
+        console.error('Error generating chat HTML:', error);
+        throw new Error('Failed to generate chat HTML: ' + error.message);
+      }
+    }
+    
+    async function autoSaveGeneratedReport() {
+      try {
+        console.log('Auto-saving generated report...');
+        
+        // Get the latest output which should contain Q's HTML report
+        const outputElement = document.getElementById('output');
+        const fullContent = outputElement ? (outputElement.textContent || outputElement.innerText || '') : '';
+        
+        // Extract HTML content from Q's response (look for HTML tags)
+        const htmlMatch = fullContent.match(/<!DOCTYPE html[\s\S]*<\/html>/i);
+        
+        if (!htmlMatch) {
+          console.log('No complete HTML found in Q response, waiting longer...');
+          // Try again in 3 seconds
+          setTimeout(() => {
+            if (waitingForReportResponse) {
+              autoSaveGeneratedReport();
+            }
+          }, 3000);
+          return;
+        }
+        
+        const generatedHTML = htmlMatch[0];
+        console.log('Found generated HTML report, length:', generatedHTML.length);
+        
+        const timestamp = new Date().toLocaleString();
+        const filename = `q-cli-generated-report-${Date.now()}.html`;
+        
+        // Save the Q-generated HTML report
+        const result = await window.electronAPI.saveReport(filename, generatedHTML);
+        
+        if (result.success) {
+          console.log('Generated report auto-saved successfully:', result.filePath);
+          addOutput(`✅ Report auto-saved successfully!\n`);
+          addOutput(`📁 Saved to: ${result.filePath}\n`);
+          
+          // Add clickable link
+          const linkSpan = document.createElement('span');
+          linkSpan.innerHTML = `<span class="file-link" onclick="openFile('${result.filePath}')">🔗 Click to open generated report</span>\n`;
+          document.getElementById('output').appendChild(linkSpan);
+          document.getElementById('output').scrollTop = document.getElementById('output').scrollHeight;
+        } else {
+          console.error('Failed to auto-save generated report:', result.error);
+          addOutput(`⚠️ Generated report could not be auto-saved: ${result.error}\n`);
+        }
+        
+        // Reset flags
+        isGeneratingReport = false;
+        waitingForReportResponse = false;
+        
+      } catch (error) {
+        console.error('Error in auto-save generated report:', error);
+        addOutput(`⚠️ Error auto-saving report: ${error.message}\n`);
+        
+        // Reset flags
+        isGeneratingReport = false;
+        waitingForReportResponse = false;
+      }
+    }
+    
+    function openFile(path) {
+      try {
+        if (window.electronAPI) {
+          window.electronAPI.openFileExternal(path);
+        }
+      } catch (error) {
+        console.error('Error opening file:', error);
+      }
+    }
+    
+    // MCP Configuration Functions
+    async function openMcpConfig() {
+      try {
+        const result = await window.electronAPI.getMcpConfig();
+        
+        if (result.success) {
+          showMcpEditor(result.content, result.path);
+        } else {
+          alert('Could not load MCP config: ' + result.error);
+        }
+      } catch (error) {
+        alert('Error loading MCP config: ' + error.message);
+      }
+    }
+    
+    function showMcpEditor(jsonContent, filePath) {
+      const sizeKB = new Blob([jsonContent]).size / 1024;
+      
+      if (sizeKB > 500) {
+        if (!confirm(`Large file (${Math.round(sizeKB)}KB). Continue editing?`)) return;
+      }
+      
+      const modal = document.createElement('div');
+      modal.className = 'mcp-modal';
+      modal.innerHTML = `
+        <div class="mcp-editor">
+          <h3>MCP Configuration Editor <button onclick="copyMcpConfig()" style="float: right; font-size: 10px; padding: 2px 6px;">📋 Copy</button></h3>
+          <div class="mcp-path">
+            📁 ${filePath} (${Math.round(sizeKB)}KB)
+          </div>
+          <div class="editor-container">
+            <div id="lineNumbers" class="line-numbers"></div>
+            <textarea id="jsonEditor" class="mcp-textarea" oninput="updateLineNumbers()">${jsonContent}</textarea>
+          </div>
+          <div class="mcp-buttons">
+            <button onclick="validateAndBeautifyJson()">Validate & Beautify JSON</button>
+            <button onclick="resetMcpConfig()">Reset Config</button>
+            <button onclick="saveMcpConfig('${filePath}')">Save & Restart</button>
+            <button onclick="closeMcpEditor()">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Initialize line numbers
+      setTimeout(updateLineNumbers, 10);
+    }
+    
+    function updateLineNumbers() {
+      const textarea = document.getElementById('jsonEditor');
+      const lineNumbers = document.getElementById('lineNumbers');
+      const lines = textarea.value.split('\n').length;
+      
+      let numbers = '';
+      for (let i = 1; i <= lines; i++) {
+        numbers += i + '\n';
+      }
+      lineNumbers.textContent = numbers;
+    }
+    
+    function getLineFromPosition(text, position) {
+      return text.substring(0, position).split('\n').length;
+    }
+    
+    function enhanceJsonError(content, error) {
+      let errorMsg = error.message;
+      const posMatch = errorMsg.match(/position (\d+)/);
+      if (posMatch) {
+        const position = parseInt(posMatch[1]);
+        const lineNumber = getLineFromPosition(content, position);
+        errorMsg += ` (Line ${lineNumber})`;
+      }
+      return errorMsg;
+    }
+    
+    function validateAndBeautifyJson() {
+      const content = document.getElementById('jsonEditor').value;
+      try {
+        const parsed = JSON.parse(content);
+        const formatted = JSON.stringify(parsed, null, 2);
+        document.getElementById('jsonEditor').value = formatted;
+        updateLineNumbers();
+        alert('✅ JSON is valid and has been beautified!');
+      } catch (error) {
+        alert('❌ JSON Error: ' + enhanceJsonError(content, error));
+      }
+    }
+    
+    function copyMcpConfig() {
+      const content = document.getElementById('jsonEditor').value;
+      navigator.clipboard.writeText(content).then(() => {
+        alert('📋 JSON copied to clipboard!');
+      }).catch(() => {
+        // Fallback for older browsers
+        document.getElementById('jsonEditor').select();
+        document.execCommand('copy');
+        alert('📋 JSON copied to clipboard!');
+      });
+    }
+    
+    function resetMcpConfig() {
+      const templateConfig = `{
+  "mcpServers": {
+    "mcp-atlassian": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-e", "CONFLUENCE_URL",
+        "-e", "CONFLUENCE_PERSONAL_TOKEN",
+        "-e", "CONFLUENCE_SSL_VERIFY",
+        "-e", "JIRA_URL",
+        "-e", "JIRA_PERSONAL_TOKEN",
+        "-e", "JIRA_SSL_VERIFY",
+        "ghcr.io/sooperset/mcp-atlassian:latest"
+      ],
+      "env": {
+        "CONFLUENCE_URL": "https://confluence.base.domain.com",
+        "CONFLUENCE_USERNAME": "00000001",
+        "CONFLUENCE_SSL_VERIFY": "false",
+        "CONFLUENCE_PERSONAL_TOKEN": "<>",
+        "JIRA_URL": "https://jira.base.domain.com",
+        "JIRA_USERNAME": "00000001", 
+        "JIRA_SSL_VERIFY": "false",
+        "JIRA_PERSONAL_TOKEN": "<>"
+      }
+    }
+  }
+}`;
+      
+      if (confirm('Reset to template configuration? This will replace current content.')) {
+        document.getElementById('jsonEditor').value = templateConfig;
+        updateLineNumbers();
+        alert('✅ Template configuration loaded! Update placeholder values and save.');
+      }
+    }
+    
+    async function saveMcpConfig(filePath) {
+      const content = document.getElementById('jsonEditor').value;
+      
+      try {
+        // Validate JSON first
+        JSON.parse(content);
+        
+        const result = await window.electronAPI.saveMcpConfig(content);
+        
+        if (result.success) {
+          alert('MCP config saved successfully!');
+          closeMcpEditor();
+        } else {
+          alert('Error saving MCP config: ' + result.error);
+        }
+      } catch (error) {
+        alert('Invalid JSON format: ' + error.message);
+      }
+    }
+    
+    function closeMcpEditor() {
+      const modal = document.querySelector('.mcp-modal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+    
+    function closeApp() {
+      try {
+        console.log('Close button clicked, closing app...');
+        if (window.electronAPI && window.electronAPI.closeApp) {
+          window.electronAPI.closeApp();
+        } else {
+          // Fallback: close window
+          window.close();
+        }
+      } catch (error) {
+        console.error('Error closing app:', error);
+        window.close();
+      }
+    }
+    
+    // Ctrl/Cmd+Enter to send, Enter for new line
+    document.getElementById('input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    
+    // Enable copy functionality in output area
+    document.getElementById('output').addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        // Let browser handle the copy - don't prevent default
+        console.log('Copy shortcut detected in output area');
+      }
+    });
+    
+    // Enable right-click context menu for copy
+    document.getElementById('output').addEventListener('contextmenu', (e) => {
+      // Allow default context menu for copy functionality
+      console.log('Right-click context menu enabled for copy');
+    });
+    
+    // Fix Cmd+A selection
+    document.getElementById('input').addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        e.preventDefault();
+        e.target.select();
+      }
+    });
+    
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        console.log('DOM loaded, initializing...');
+        
+        if (!window.electronAPI) {
+          console.error('Electron API not available');
+          addOutput('Error: Electron API not available\n');
+          return;
+        }
+        
+        console.log('Electron API available, starting session...');
+        initSession();
+        loadChatList(); // Load saved chats
+        loadSavedTheme(); // Load saved theme
+        
+        window.electronAPI.onQOutput((event, data) => {
+          try {
+            console.log('Received Q output for session:', data.sessionId, 'Current session:', sessionId);
+            
+            if (data.sessionId === sessionId) {
+              // Filter out the report generation prompt from UI display
+              const isReportPrompt = data.data.includes('Please analyze our entire conversation and create a comprehensive HTML report');
+              
+              if (isReportPrompt) {
+                console.log('Filtering out report generation prompt from UI display');
+                return; // Don't show the prompt in the UI
+              }
+              
+              // Check if this is the start of Q's HTML report response
+              if (waitingForReportResponse && (data.data.includes('<!DOCTYPE html') || data.data.includes('<html'))) {
+                console.log('Detected start of HTML report response from Q CLI');
+                addOutput('📄 Report generated! Processing...\n');
+              }
+              
+              // Check if Q CLI finished generating the HTML report (look for completion indicators)
+              if (waitingForReportResponse && (
+                data.data.includes('You can open the HTML file in any browser') ||
+                data.data.includes('share it directly with stakeholders') ||
+                data.data.includes('</html>') ||
+                (data.data.includes('> ') && data.data.length < 50) // New prompt after report
+              )) {
+                console.log('Detected completion of HTML report generation');
+                setTimeout(() => {
+                  if (waitingForReportResponse) {
+                    autoSaveGeneratedReport();
+                  }
+                }, 1000); // Wait 1 second for any final chunks
+              }
+              
+              addOutput(data.data);
+              
+              // Handle prompts
+              if (data.isPrompt || /\(y\/n\)|Do you want to continue\?|Can I|Should I|Allow|Trust|Proceed|\[y\/n\/t\]/i.test(data.data)) {
+                console.log('Prompt detected, switching to prompt mode');
+                isWaitingForPrompt = true;
+                document.getElementById('input').className = 'prompt-mode';
+                document.getElementById('input').placeholder = 'Enter y/n/yes/no/trust response...';
+              } else if (isWaitingForPrompt && data.data.includes('> ')) {
+                console.log('Prompt response received, switching back to normal mode');
+                isWaitingForPrompt = false;
+                document.getElementById('input').className = '';
+                document.getElementById('input').placeholder = 'Enter command...';
+              }
+              
+              // Reset report generation flags when Q CLI shows a new prompt
+              if (data.data.includes('> ') && waitingForReportResponse) {
+                console.log('Q CLI ready for new input, resetting report generation flags');
+                isGeneratingReport = false;
+                waitingForReportResponse = false;
+              }
+            }
+          } catch (error) {
+            console.error('Error handling Q output:', error);
+          }
+        });
+        
+        window.electronAPI.onSessionClosed((event, data) => {
+          console.log('Session closed:', data);
+          if (data.sessionId === sessionId) {
+            sessionId = null;
+            document.getElementById('status').className = 'disconnected';
+            addOutput('Session ended\n');
+          }
+        });
+        
+      } catch (error) {
+        console.error('Error during initialization:', error);
+        addOutput('Initialization error: ' + error.message + '\n');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+{
+  "name": "classic-q-interface",
+  "version": "0.0.1",
+  "description": "A 90s-style web interface for Amazon Q CLI",
+  "author": "Classic Q Interface",
+  "main": "src/main.js",
+  "homepage": "./",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "build": "electron-builder",
+    "build-mac": "electron-builder --mac --publish=always",
+    "build-win": "electron-builder --win --publish=always",
+    "build-linux": "electron-builder --linux --publish=always",
+    "dist": "electron-builder --publish=never",
+    "postinstall": "electron-builder install-app-deps",
+    "test": "echo \"No tests\" && exit 0"
+  },
+  "build": {
+    "appId": "com.classicq.interface",
+    "productName": "Classic Q Interface",
+    "publish": {
+      "provider": "github",
+      "owner": "13shivam",
+      "repo": "classic-q-interface"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "index.html",
+      "package.json"
+    ],
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "npmRebuild": true,
+    "mac": {
+      "icon": "assets/icon.png",
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64"]
+        }
+      ],
+      "identity": null
+    },
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "category": "Development",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "node-pty": "^1.0.0",
+    "sqlite3": "^5.1.6"
+  },
+  "optionalDependencies": {
+    "node-pty": "^1.0.0"
+  },
+  "devDependencies": {
+    "electron": "^22.0.0",
+    "electron-builder": "^26.0.12"
+  }
+}
