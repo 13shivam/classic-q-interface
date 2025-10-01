@@ -72,6 +72,14 @@ A nostalgic 90s-themed desktop application that brings classic computing aesthet
 
 ## Quick Start
 
+### Install via Homebrew (macOS)
+```bash
+brew tap 13shivam/classic-q
+brew install --cask classic-q-interface
+```
+
+### Build from Source
+
 ```bash
 # Install dependencies
 npm install
