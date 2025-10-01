@@ -2,6 +2,14 @@
 
 A nostalgic 90s-themed desktop application that brings classic computing aesthetics to modern AI interactions through Amazon Q CLI, featuring retro UI elements, monospace fonts, vintage button styling, and modern conveniences like dark mode and persistent chat history.
 
+## Quick Start
+
+### Install via Homebrew (macOS)
+```bash
+brew tap 13shivam/classic-q
+brew install --cask classic-q-interface
+```
+
 ## Screenshots
 
 ![Main Interface](assets/screenshots/main-interface.png)
@@ -20,65 +28,33 @@ A nostalgic 90s-themed desktop application that brings classic computing aesthet
 
 ## Features
 
-### Core Functionality
-- **Real-time Q CLI integration** with streaming output and proper terminal emulation
-- **Interactive prompts handling** - automatic detection and response to y/n/trust prompts
-- **File path linking** - click file paths in output to open files/directories
-- **Session management** - create, manage, and terminate Q CLI sessions
-- **Cross-platform support** (macOS, Windows, Linux) with platform-specific optimizations
-- **Single instance protection** - prevents multiple app instances
+**Core Functionality**
+- Real-time Q CLI integration with streaming output
+- Interactive prompts (y/n/trust buttons) and file path linking
+- Cross-platform support with single instance protection
 
-### Chat History & Persistence
-- **SQLite-based chat storage** - persistent local database for saved conversations
-- **Smart save system** - update existing chats or save as new conversations
-- **Visual chat selection** - sidebar highlighting of currently loaded chat
-- **Chat management** - delete conversations with confirmation dialogs using 🗑️ buttons
-- **100 chat limit** - prevents database bloat with automatic limit enforcement
-- **Instant chat loading** - display saved conversations for manual context reference
-- **Collapsible sidebar** - starts collapsed, expands on demand for clean interface
+**Chat Management**
+- SQLite-based persistent chat history (100 chat limit)
+- Save, load, delete conversations with sidebar management
+- Export chats as HTML reports
 
-### MCP (Model Context Protocol) Support
-- **MCP Configuration Editor** - built-in editor for `~/.aws/amazonq/mcp.json`
-- **Automatic MCP server detection** - comprehensive PATH resolution for MCP servers
-- **Docker integration** - automatic Docker path detection for containerized MCP servers
-- **Configuration backup** - automatic backup creation when saving MCP configs
-- **Real-time config validation** - JSON syntax validation before saving
-- **Template reset** - one-click template configuration for quick setup
-- **Copy configuration** - 📋 button to copy entire JSON config to clipboard
+**MCP Support**
+- Built-in editor for `~/.aws/amazonq/mcp.json`
+- Auto-detection of MCP servers and Docker integration
+- Configuration backup and JSON validation
 
-### UI/UX Enhancements
-- **90s retro styling** - authentic vintage computing aesthetics with inset/outset borders
-- **Dark/Light mode toggle** - 🌙/☀️ button with smooth transitions and persistent preference
-- **Stacked layout design** - full-width text area with button footer for optimal typing experience
-- **Responsive design** - adapts to different window sizes with resizable sidebar
-- **Text selection & copy** - full copy support in chat output with Ctrl+C and right-click
-- **Keyboard shortcuts** - Ctrl/Cmd+Enter to send messages
-- **Auto-scrolling output** - automatically scrolls to latest output
-- **Visual feedback** - hover effects, button states, and loading indicators
+**UI/UX**
+- 90s retro styling with dark/light mode toggle
+- Keyboard shortcuts (Ctrl/Cmd+Enter), text selection
+- Responsive design with collapsible sidebar
 
-### Advanced Features
-- **Smart terminal emulation** - uses node-pty when available, falls back to child_process
-- **Comprehensive error handling** - detailed error reporting and troubleshooting guidance
-- **File system operations** - read files, browse directories, open external applications
-- **Export functionality** - save conversations and generate HTML reports
-- **Developer tools** - Available in development builds only for security
-- **Theme persistence** - remembers dark/light mode preference across sessions
+## Build from Source 
 
-## Prerequisites
+### Prerequisites
 
 - Node.js 16+
 - Amazon Q CLI installed and configured
 - SQLite3 (automatically installed via npm)
-
-## Quick Start
-
-### Install via Homebrew (macOS)
-```bash
-brew tap 13shivam/classic-q
-brew install --cask classic-q-interface
-```
-
-### Build from Source
 
 ```bash
 # Install dependencies
@@ -101,7 +77,6 @@ npm run build
 5. Select and copy text from chat output using Ctrl+C or right-click
 
 ### Theme Switching
-*Dark and light mode toggle with 90s aesthetics*
 
 1. **Toggle Theme**: Click 🌙 button to switch to dark mode
 2. **Persistent Preference**: Theme choice is remembered across app restarts
@@ -109,7 +84,6 @@ npm run build
 4. **Complete Coverage**: All dialogs, modals, and UI elements support both themes
 
 ### Chat History Management
-*Managing saved conversations in the collapsible sidebar*
 
 1. **Expand Sidebar**: Click ≡ button to show/hide chat history
 2. **Save Chat**: Click "Save Chat" button (requires 200+ characters)
@@ -119,7 +93,6 @@ npm run build
 6. **New Session**: Click "New" to start fresh conversation and clear loaded state
 
 ### MCP Configuration
-*Editing MCP server configuration with built-in editor and dark mode*
 
 1. Click "MCP Config" button to open editor
 2. Edit JSON configuration with syntax highlighting and line numbers
