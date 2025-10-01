@@ -12,11 +12,13 @@ permissions:
 jobs:
   release:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-13
             build_script: npm run build-mac
             delay: 0
           - os: windows-latest  
